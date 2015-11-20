@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>AMR decode/encode tests</title>
+    <script src="amrnb.js" defer></script>
+</head>
+
+<body>
+
+<p>
+    Select a local file and play: <input type="file" id="amr-file" accept=".amr">
+</p>
+
+
+<script>
+    var  aaa; 
+    function E(selector) {
+        return document.querySelector(selector);
+    }
+
+    E('#amr-file').onchange = function() {
+        playAmrBlob(this.files[0]);
+    };
+	
+    E('#amr-file').onclick = function() {	
+	   if(this.files[0] != ''){
+	    playAmrBlob(this.files[0]);
+	   }else{
+	   }       
+    };
+
+    var gAudioContext = new AudioContext();
+
+    function getAudioContext() {
+        if (!gAudioContext) {
+            gAudioContext = new AudioContext();
+        }
+        return gAudioContext;
+    }
+
+    function readBlob(blob, callback) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var data = new Uint8Array(e.target.result);
+            callback(data);
+        };
+        reader.readAsArrayBuffer(blob);
+    }
+
+    function playAmrBlob(blob, callback) {
+        readBlob(blob, function(data) {
+            playAmrArray(data);
+        });
+    }
+
+    function playAmrArray(array) {
+        var samples = AMR.decode(array);
+        if (!samples) {
+            alert('Failed to decode!');
+            return;
+        }
+        playPcm(samples);
+    }
+
+    function playPcm(samples) {
+        var ctx = getAudioContext();
+        var src = ctx.createBufferSource();
+        var buffer = ctx.createBuffer(1, samples.length, 8000);
+        if (buffer.copyToChannel) {
+            buffer.copyToChannel(samples, 0, 0)
+        } else {
+            var channelBuffer = buffer.getChannelData(0);
+            channelBuffer.set(samples);
+        }
+
+        src.buffer = buffer;
+        src.connect(ctx.destination);
+		aaa = src ;
+		console.log(aaa);
+        src.start();
+    }
+	 
+	function  stop(){
+	  aaa.stop();
+	} 
+
+</script>
+</body>
+</html>
